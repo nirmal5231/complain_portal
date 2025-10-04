@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Complaint Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in-up { animation: fadeInUp 1s ease-in-out forwards; }
+        #splash-screen { display: flex; }
+        #email-notification {
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
+    </style>
+    <!-- NAYA: EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div id="splash-screen" class="page active fixed inset-0 bg-indigo-600 items-center justify-center z-50">
+        <h1 class="text-4xl md:text-5xl font-bold text-white opacity-0 fade-in-up">Welcome to Student Complaint Portal</h1>
+    </div>
+
+    <!-- Notification box jo ab email status batayega -->
+    <div id="email-notification" class="hidden fixed top-5 right-5 bg-white p-4 rounded-lg shadow-2xl z-50 border-l-4 border-green-500 transform translate-x-full transition-transform duration-500">
+        <p id="notification-text" class="text-gray-800">Email sent successfully!</p>
+    </div>
+
+
+    <div class="container mx-auto p-4 max-w-4xl w-full">
+        <!-- Baaki saara HTML waisa hi rahega -->
+        <!-- Home Page -->
+        <div id="home-page" class="page">
+            <div class="text-center">
+                 <h1 class="text-4xl font-bold text-gray-800 mb-4">Choose Your Login</h1>
+                 <p class="text-gray-500 mb-12">Please select whether you are a student or an admin.</p>
+                 <div class="flex flex-col md:flex-row gap-6 justify-center">
+                     <button id="show-student-login" class="bg-white text-indigo-600 font-semibold py-6 px-12 rounded-xl shadow-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300"><span class="text-2xl">Student Login</span></button>
+                     <button id="show-admin-login" class="bg-gray-800 text-white font-semibold py-6 px-12 rounded-xl shadow-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300"><span class="text-2xl">Admin Login</span></button>
+                 </div>
+            </div>
+        </div>
+
+        <!-- Login Page -->
+        <div id="login-page" class="page">
+            <div class="bg-white p-8 md:p-12 rounded-xl shadow-lg w-full max-w-md mx-auto">
+                 <button id="back-to-home" class="text-gray-500 hover:text-gray-800 mb-4">&larr; Back</button>
+                <div class="text-center mb-8">
+                    <h1 id="login-title" class="text-3xl font-bold text-gray-800">Login</h1>
+                    <p class="text-gray-500 mt-2">Sign in to your account</p>
+                </div>
+                <form id="login-form">
+                    <div class="mb-4">
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" id="email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Enter your email" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                        <input type="password" id="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Enter password" required>
+                    </div>
+                    <div id="login-error" class="text-red-500 text-sm mb-4 text-center hidden"></div>
+                    <button type="submit" class="w-full bg-indigo-600 text-white font-semibold py-3 rounded-lg hover:bg-indigo-700 transition duration-300">Login</button>
+                </form>
+                <div id="signup-link-container" class="mt-4 text-center">
+                    <p class="text-sm text-gray-600">Don't have an account? <a href="#" id="show-signup-link" class="font-medium text-indigo-600 hover:underline">Sign Up</a></p>
+               </div>
+            </div>
+        </div>
+        
+        <!-- Signup Page -->
+        <div id="signup-page" class="page">
+            <div class="bg-white p-8 md:p-12 rounded-xl shadow-lg w-full max-w-md mx-auto">
+                 <button id="back-to-login" class="text-gray-500 hover:text-gray-800 mb-4">&larr; Back to Login</button>
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold text-gray-800">Create Student Account</h1>
+                    <p class="text-gray-500 mt-2">Join the portal to submit your complaints</p>
+                </div>
+                <form id="signup-form">
+                    <div class="mb-4">
+                        <label for="signup-name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                        <input type="text" id="signup-name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Enter your full name" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="signup-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" id="signup-email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Enter your email" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="signup-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                        <input type="password" id="signup-password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Create a password" required>
+                    </div>
+                    <div id="signup-error" class="text-red-500 text-sm mb-4 text-center hidden"></div>
+                    <div id="signup-success" class="text-green-500 text-sm mb-4 text-center hidden"></div>
+                    <button type="submit" class="w-full bg-indigo-600 text-white font-semibold py-3 rounded-lg hover:bg-indigo-700 transition duration-300">Create Account</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Student Dashboard -->
+        <div id="student-dashboard" class="page">
+            <div class="bg-white p-8 rounded-xl shadow-lg w-full">
+                <header class="flex justify-between items-center mb-8 border-b pb-4">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-800">Student Dashboard</h1>
+                        <p id="welcome-student" class="text-gray-600"></p>
+                    </div>
+                    <button id="student-logout" class="bg-red-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-red-600 transition duration-300">Logout</button>
+                </header>
+                <div class="mb-8">
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-4">File a New Complaint</h2>
+                    <form id="complaint-form">
+                        <textarea id="complaint-text" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Describe your issue here..." required></textarea>
+                        <button type="submit" class="mt-4 bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-indigo-700 transition duration-300">Submit Complaint</button>
+                    </form>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-4">Your Complaints</h2>
+                    <div id="student-complaints-list" class="space-y-4"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Dashboard -->
+        <div id="admin-dashboard" class="page">
+            <div class="bg-white p-8 rounded-xl shadow-lg w-full">
+                <header class="flex justify-between items-center mb-8 border-b pb-4">
+                     <div><h1 class="text-3xl font-bold text-gray-800">Admin Panel</h1><p class="text-gray-600">Review and manage student complaints</p></div>
+                    <button id="admin-logout" class="bg-red-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-red-600 transition duration-300">Logout</button>
+                </header>
+                 <div>
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-4">All Student Complaints</h2>
+                    <div id="admin-complaints-list" class="space-y-4"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        // --- ZAROORI: EmailJS details daal di gayi hain ---
+        const EMAILJS_SERVICE_ID = 'service_o9ejidj';
+        const EMAILJS_TEMPLATE_ID = 'template_9tgasyd';
+        const EMAILJS_PUBLIC_KEY = 'dwOgfiSYzlwizgvma';
+        // --------------------------------------------------
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyAyaqdVXmL9QbiEaHhEDSuOgqflDgTM6h4",
+          authDomain: "studentcomplainportal.firebaseapp.com",
+          projectId: "studentcomplainportal",
+          storageBucket: "studentcomplainportal.appspot.com",
+          messagingSenderId: "651821879569",
+          appId: "1:651821879569:web:d9300381e8caa65464bcb0",
+          measurementId: "G-SNLG0ZN5MB"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // NAYA: EmailJS ko initialize karna
+        emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+
+        const splashScreen = document.getElementById('splash-screen');
+        const allPages = document.querySelectorAll('.page');
+        const homePage = document.getElementById('home-page');
+        const loginPage = document.getElementById('login-page');
+        const signupPage = document.getElementById('signup-page');
+        const studentDashboard = document.getElementById('student-dashboard');
+        const adminDashboard = document.getElementById('admin-dashboard');
+        const loginForm = document.getElementById('login-form');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const loginError = document.getElementById('login-error');
+        const signupForm = document.getElementById('signup-form');
+        const signupNameInput = document.getElementById('signup-name');
+        const signupEmailInput = document.getElementById('signup-email');
+        const signupPasswordInput = document.getElementById('signup-password');
+        const signupError = document.getElementById('signup-error');
+        const signupSuccess = document.getElementById('signup-success');
+        const complaintForm = document.getElementById('complaint-form');
+        const complaintTextInput = document.getElementById('complaint-text');
+        const studentComplaintsList = document.getElementById('student-complaints-list');
+        const adminComplaintsList = document.getElementById('admin-complaints-list');
+        const welcomeStudentText = document.getElementById('welcome-student');
+        const emailNotification = document.getElementById('email-notification');
+        const notificationText = document.getElementById('notification-text');
+
+        let currentUserData = null; 
+        let unsubscribeComplaints = null; 
+        let unsubscribeAdminComplaints = null;
+
+        function showPage(pageId) {
+            if (splashScreen && splashScreen.style.display !== 'none') {
+                splashScreen.style.display = 'none';
+            }
+            allPages.forEach(page => page.classList.remove('active'));
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) {
+                targetPage.classList.add('active');
+            }
+        }
+
+        function getStatusBadge(status) {
+            switch (status) {
+                case 'Pending': return 'bg-yellow-100 text-yellow-800';
+                case 'Approved': return 'bg-blue-100 text-blue-800';
+                case 'Resolved': return 'bg-green-100 text-green-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+        
+        function showNotification(message, isError = false) {
+            notificationText.textContent = message;
+            const borderClass = isError ? 'border-red-500' : 'border-green-500';
+            emailNotification.classList.remove('border-green-500', 'border-red-500');
+            emailNotification.classList.add(borderClass);
+            
+            emailNotification.classList.remove('hidden', 'translate-x-full');
+            
+            setTimeout(() => {
+                emailNotification.classList.add('translate-x-full');
+                setTimeout(() => {
+                   emailNotification.classList.add('hidden');
+                }, 500);
+            }, 3000);
+        }
+
+        auth.onAuthStateChanged(async (user) => {
+            if (unsubscribeComplaints) unsubscribeComplaints();
+            if (unsubscribeAdminComplaints) unsubscribeAdminComplaints();
+             
+            if (user) {
+                const userDocRef = db.collection("users").doc(user.uid);
+                const userDocSnap = await userDocRef.get();
+                if (userDocSnap.exists) {
+                    currentUserData = { uid: user.uid, ...userDocSnap.data() };
+                    if (currentUserData.role === 'admin') {
+                        renderAdminDashboard();
+                        showPage('admin-dashboard');
+                    } else {
+                        renderStudentDashboard();
+                        showPage('student-dashboard');
+                    }
+                } else {
+                    console.error("User data not found in Firestore! This can happen if signup is interrupted.");
+                    await auth.signOut();
+                }
+            } else {
+                 setTimeout(() => {
+                    showPage('home-page');
+                }, 2000);
+            }
+        });
+        
+        document.getElementById('show-student-login').addEventListener('click', () => {
+            document.getElementById('login-title').textContent = 'Student/Admin Login';
+            document.getElementById('signup-link-container').classList.remove('hidden');
+            showPage('login-page');
+        });
+        document.getElementById('show-admin-login').addEventListener('click', () => {
+            document.getElementById('login-title').textContent = 'Student/Admin Login';
+             document.getElementById('signup-link-container').classList.add('hidden');
+            showPage('login-page');
+        });
+        document.getElementById('back-to-home').addEventListener('click', () => showPage('home-page'));
+        document.getElementById('back-to-login').addEventListener('click', () => showPage('login-page'));
+        document.getElementById('show-signup-link').addEventListener('click', (e) => { e.preventDefault(); showPage('signup-page'); });
+
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = signupNameInput.value;
+            const email = signupEmailInput.value;
+            const password = signupPasswordInput.value;
+            signupError.classList.add('hidden');
+            signupSuccess.classList.add('hidden');
+            try {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                await db.collection("users").doc(user.uid).set({ name, email, role: 'student' });
+                signupForm.reset();
+                signupSuccess.textContent = 'Account created! Redirecting...';
+                signupSuccess.classList.remove('hidden');
+            } catch (error) {
+                signupError.textContent = error.message;
+                signupError.classList.remove('hidden');
+            }
+        });
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            loginError.classList.add('hidden');
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                loginForm.reset();
+            } catch (error) {
+                loginError.textContent = "Invalid email or password.";
+                loginError.classList.remove('hidden');
+            }
+        });
+        
+        document.getElementById('student-logout').addEventListener('click', () => auth.signOut());
+        document.getElementById('admin-logout').addEventListener('click', () => auth.signOut());
+
+        complaintForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUserData) return;
+            const text = complaintTextInput.value;
+            try {
+                await db.collection("complaints").add({
+                    studentId: currentUserData.uid,
+                    studentName: currentUserData.name,
+                    text,
+                    status: 'Pending',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                complaintForm.reset();
+            } catch (error) {
+                console.error("Error adding complaint: ", error);
+            }
+        });
+
+        function renderStudentDashboard() {
+            welcomeStudentText.textContent = `Welcome, ${currentUserData.name}!`;
+            unsubscribeComplaints = db.collection("complaints")
+                .where("studentId", "==", currentUserData.uid)
+                .orderBy("createdAt", "desc")
+                .onSnapshot((querySnapshot) => {
+                    const complaints = [];
+                    querySnapshot.forEach((doc) => complaints.push({ id: doc.id, ...doc.data() }));
+                    studentComplaintsList.innerHTML = '';
+                    if (complaints.length === 0) {
+                         studentComplaintsList.innerHTML = '<p class="text-gray-500">You have no complaints.</p>';
+                    } else {
+                        complaints.forEach(c => {
+                            const div = document.createElement('div');
+                            div.className = 'bg-gray-50 p-4 rounded-lg border';
+                            div.innerHTML = `<p class="text-gray-800">${c.text}</p><div class="flex items-center justify-between mt-2"><span class="text-xs font-semibold px-2 py-1 rounded-full ${getStatusBadge(c.status)}">${c.status}</span><span class="text-xs text-gray-500">${c.createdAt ? new Date(c.createdAt.seconds * 1000).toLocaleString() : 'Just now'}</span></div>`;
+                            studentComplaintsList.appendChild(div);
+                        });
+                    }
+                }, (error) => {
+                    console.error("Error fetching student complaints: ", error);
+                    studentComplaintsList.innerHTML = `<p class="text-red-500">Could not load complaints. Please check console for errors.</p>`;
+                });
+        }
+
+        function renderAdminDashboard() {
+            unsubscribeAdminComplaints = db.collection("complaints")
+                .orderBy("createdAt", "desc")
+                .onSnapshot((querySnapshot) => {
+                    const complaints = [];
+                    querySnapshot.forEach((doc) => complaints.push({ id: doc.id, ...doc.data() }));
+                    adminComplaintsList.innerHTML = '';
+                     if (complaints.length === 0) {
+                         adminComplaintsList.innerHTML = '<p class="text-gray-500">There are no complaints yet.</p>';
+                    } else {
+                        complaints.forEach(c => {
+                            const div = document.createElement('div');
+                            div.className = 'bg-gray-50 p-4 rounded-lg border';
+                            div.innerHTML = `<p class="text-gray-800 font-medium">${c.text}</p><p class="text-sm text-gray-600 mt-1">From: <span class="font-semibold">${c.studentName}</span></p><div class="flex items-center justify-between mt-3"><span class="text-xs font-semibold px-2 py-1 rounded-full ${getStatusBadge(c.status)}">${c.status}</span><div class="flex gap-2">${c.status === 'Pending' ? `<button data-id="${c.id}" class="approve-btn bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-md hover:bg-blue-600">Approve</button>` : ''}${c.status !== 'Resolved' ? `<button data-id="${c.id}" data-student-name="${c.studentName}" data-student-id="${c.studentId}" data-complaint-text="${c.text}" class="resolve-btn bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-md hover:bg-green-600">Mark as Resolved</button>` : ''}</div></div>`;
+                            adminComplaintsList.appendChild(div);
+                        });
+                    }
+                }, (error) => {
+                     console.error("Error fetching admin complaints: ", error);
+                    adminComplaintsList.innerHTML = `<p class="text-red-500">Could not load complaints. Please check your Firestore rules and indexes.</p>`;
+                });
+        }
+
+        adminComplaintsList.addEventListener('click', async (e) => {
+            const target = e.target;
+            const complaintId = target.dataset.id;
+            
+            if (target.classList.contains('approve-btn')) {
+                const complaintRef = db.collection('complaints').doc(complaintId);
+                await complaintRef.update({ status: 'Approved' });
+            }
+            if (target.classList.contains('resolve-btn')) {
+                target.disabled = true;
+                target.textContent = 'Sending...';
+
+                const complaintRef = db.collection('complaints').doc(complaintId);
+                
+                const studentId = target.dataset.studentId;
+                const studentName = target.dataset.studentName;
+                const complaintText = target.dataset.complaintText;
+
+                const userDocRef = db.collection("users").doc(studentId);
+                const userDocSnap = await userDocRef.get();
+                
+                if (userDocSnap.exists) {
+                    const studentEmail = userDocSnap.data().email;
+                    
+                    const templateParams = {
+                        to_name: studentName,
+                        complaint_text: complaintText,
+                        to_email: studentEmail
+                    };
+
+                    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+                        .then(async (response) => {
+                           console.log('SUCCESS!', response.status, response.text);
+                           await complaintRef.update({ status: 'Resolved' });
+                           showNotification('Email sent successfully!');
+                        }, (error) => {
+                           console.log('FAILED...', error);
+                           showNotification('Failed to send email.', true);
+                           target.disabled = false;
+                           target.textContent = 'Mark as Resolved';
+                        });
+
+                } else {
+                    console.error("Could not find student to send email.");
+                    showNotification('Could not find student data.', true);
+                    target.disabled = false;
+                    target.textContent = 'Mark as Resolved';
+                }
+            }
+        });
+        
+    </script>
+</body>
+</html>
+
